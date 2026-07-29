@@ -1,0 +1,41 @@
+name: Generate retirements and promotions
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run promotion simulation
+        run: |
+          python simulate_promotions.py
+
+      - name: Commit generated files back to repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add retirements_promotions.csv retirements_promotions.xlsx || true
+          if ! git diff --cached --quiet; then
+            git commit -m "Generate retirements_promotions outputs" || true
+            git push
+          else
+            echo "No changes to commit"
+          fi
